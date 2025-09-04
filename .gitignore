@@ -1,0 +1,40 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+Proyecto/PetMatch/node_modules
+
+# Expo
+Proyecto/PetMatch/.expo/
+Proyecto/PetMatch/dist/
+Proyecto/PetMatch/web-build/
+Proyecto/PetMatch/expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+Proyecto/PetMatch/*.pem
+
+# local env files
+Proyecto/PetMatch/.env*.local
+
+# typescript
+Proyecto/PetMatch/*.tsbuildinfo
+
+Proyecto/PetMatch/app-example
