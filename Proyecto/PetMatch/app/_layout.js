@@ -1,11 +1,18 @@
-import { Tabs } from "expo-router";
+import { Stack } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-export default function Layout() {
+export default function RootLayout() {
   return (
-    <Tabs>
-      <Tabs.Screen name="index" options={{ title: "Inicio" }} />
-      <Tabs.Screen name="profile" options={{ title: "Perfil" }} />
-      <Tabs.Screen name="settings" options={{ title: "Config" }} />
-    </Tabs>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="registro" />
+          <Stack.Screen name="camera" />
+          <Stack.Screen name="home" />
+        </Stack>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

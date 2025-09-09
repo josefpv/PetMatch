@@ -1,7 +1,12 @@
 {
   "name": "PetMatch",
   "slug": "PetMatch",
-  "plugins": [
-    "expo-router"
-  ]
+  "plugins": ["expo-router"],
+  "expo": {
+    "ios": {
+      "infoPlist": {
+        "NSCameraUsageDescription": "Esta app necesita acceso a la cámara para tomar fotos."
+      }
+    }
+  }
 }

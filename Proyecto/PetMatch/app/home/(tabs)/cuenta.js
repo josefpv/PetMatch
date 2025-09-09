@@ -1,9 +1,9 @@
 import { View, Text } from "react-native";
 
-export default function ProfileScreen() {
+export default function CuentaScreen() {
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Pantalla de Perfil</Text>
+      <Text>Pantalla de Configuración</Text>
     </View>
   );
 }
