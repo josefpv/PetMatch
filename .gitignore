@@ -38,3 +38,5 @@ Proyecto/PetMatch/.env*.local
 Proyecto/PetMatch/*.tsbuildinfo
 
 Proyecto/PetMatch/app-example
+Proyecto/api/accountApi/.env
+Proyecto/api/accountApi/common/firebase/serviceAccountKey.json
