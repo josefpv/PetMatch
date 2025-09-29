@@ -7,6 +7,15 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Esta app necesita acceso a la cámara para tomar fotos."
       }
+    },
+    "extra": {
+      "ACCOUNT_API_URL": "https://4218c70a865a.ngrok-free.app/api/v1/account",
+      "FB_API_KEY": "AIzaSyCZNJEkkM6YFSAHu3wdWkdvt7wkyihO-QE",
+      "FB_AUTH_DOMAIN": "petmatch-487fa.firebaseapp.com",
+      "FB_PROJECT_ID": "petmatch-487fa",
+      "FB_STORAGE_BUCKET": "petmatch-487fa.firebasestorage.app",
+      "FB_MESSAGING_SENDER_ID": "607015298343",
+      "FB_APP_ID": "1:607015298343:web:91fe6341655df1ea487502"
     }
   }
 }

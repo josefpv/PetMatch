@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, Alert, StyleSheet } from "react-native";
 import MapView, { Marker, Callout } from "react-native-maps";
-import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
+import { useRouter } from "expo-router";
 
 const getRandomAmount = () => {
   return `$${(Math.random() * 90 + 10).toFixed(2)}`;
@@ -25,8 +25,8 @@ const markersData = [
   },
 ];
 
-export default MapComponent = ({ markers = markersData }) => {
-  const navigation = useNavigation();
+const MapComponent = ({ markers = markersData }) => {
+  const router = useRouter();
   const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -71,7 +71,7 @@ export default MapComponent = ({ markers = markersData }) => {
               latitude: marker.latitude,
               longitude: marker.longitude,
             }}
-            onPress={() => console.log(`Marker ${marker.id} pressed`)}
+            onPress={() => router.push("/servicio/servicio")}
           >
             <Text style={{ fontSize: 40 }}>{marker.emoji}</Text>
 
@@ -122,3 +122,5 @@ const styles = StyleSheet.create({
     width: 60,
   },
 });
+
+export default MapComponent;

@@ -7,7 +7,8 @@ import {
   StyleSheet,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../services/firebase/firebaseSettings";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -15,9 +16,18 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    // Lógica de autenticación aquí
-    router.replace("/home");
+  const handleLogin = async () => {
+    //router.replace("/home");
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      console.log("userCredential: ", userCredential);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleRegister = () => {
