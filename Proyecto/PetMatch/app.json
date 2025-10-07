@@ -9,7 +9,7 @@
       }
     },
     "extra": {
-      "ACCOUNT_API_URL": "https://4218c70a865a.ngrok-free.app/api/v1/account",
+      "ACCOUNT_API_URL": "https://3a04d4eeeed2.ngrok-free.app/api/v1/account",
       "FB_API_KEY": "AIzaSyCZNJEkkM6YFSAHu3wdWkdvt7wkyihO-QE",
       "FB_AUTH_DOMAIN": "petmatch-487fa.firebaseapp.com",
       "FB_PROJECT_ID": "petmatch-487fa",

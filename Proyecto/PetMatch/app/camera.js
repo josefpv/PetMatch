@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     top: "25%",
     left: "10%",
     right: "10%",
-    height: "30%",
+    height: "24%",
     borderWidth: 3,
     borderColor: "rgba(255,255,255,0.9)",
     borderRadius: 12,
