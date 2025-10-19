@@ -9,12 +9,17 @@ import {
 import { useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../services/firebase/firebaseSettings";
+import { useUserStore } from "../stores/useUserStore";
+import Loading from "../components/loading";
+import { useMascotaStore } from "../stores/useMascotaStore";
 
 export default function LoginScreen() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { user, isLoggedIn, isLoading, login, logout } = useUserStore();
+  const { getMascotas } = useMascotaStore();
 
   const handleLogin = async () => {
     //router.replace("/home");
@@ -24,7 +29,9 @@ export default function LoginScreen() {
         email,
         password
       );
-      console.log("userCredential: ", userCredential);
+      login(userCredential.user.uid);
+      getMascotas(userCredential.user.uid);
+      router.replace("/home");
     } catch (error) {
       console.log(error);
     }
@@ -37,6 +44,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      {isLoading && <Loading />}
       <Text style={styles.title}>Iniciar Sesión</Text>
       <TextInput
         style={styles.input}

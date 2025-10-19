@@ -79,6 +79,28 @@ const createUser = async (req, res) => {
   } catch (error) {}
 };
 
+const getUserInfoByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).send({ error: "Falta el ID de usuario." });
+    }
+
+    const userData = await accountModel.getUserInfoByUserId(userId);
+    if (!userData) {
+      return res.status(404).send({ error: "Usuario no encontrado." });
+    }
+
+    return res.status(200).send({ user: userData });
+  } catch (error) {
+    console.error("Error al obtener la información del usuario:", error);
+    return res
+      .status(500)
+      .send({ error: "Error al obtener la información del usuario." });
+  }
+};
+
 module.exports = {
   createUser,
+  getUserInfoByUserId,
 };

@@ -12,6 +12,7 @@ export default function RootLayout() {
           <Stack.Screen name="camera" />
           <Stack.Screen name="home" />
           <Stack.Screen name="servicio/servicio" />
+          <Stack.Screen name="servicio/nuevo_servicio" />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

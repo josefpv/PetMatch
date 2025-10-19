@@ -11,9 +11,13 @@ app.use(cors());
 
 const s3Routes = require("./routes/s3Route");
 const accountRoutes = require("./routes/accountRoutes");
+const mascotaRoutes = require("./routes/mascotaRoutes");
+const servicioRoutes = require("./routes/servicioRoute");
 
 app.use("/api/v1/account/s3", s3Routes);
 app.use("/api/v1/account", accountRoutes);
+app.use("/api/v1/mascotas", mascotaRoutes);
+app.use("/api/v1/servicios", servicioRoutes);
 
 // app.post(
 //   "/base64",

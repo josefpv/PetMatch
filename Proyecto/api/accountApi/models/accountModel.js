@@ -28,6 +28,19 @@ const createAccountInFirestore = async (
   }
 };
 
+const getUserInfoByUserId = async (userId) => {
+  try {
+    const snapShot = await db.collection("users").doc(userId).get();
+    if (!snapShot.exists) {
+      return null;
+    }
+    return snapShot.data();
+  } catch (error) {
+    console.error("Error al obtener la información del usuario:", error);
+    return null;
+  }
+};
+
 const getUserByEmail = async (email) => {
   try {
     const snapShot = await db
@@ -45,4 +58,5 @@ const getUserByEmail = async (email) => {
 module.exports = {
   createAccountInFirestore,
   getUserByEmail,
+  getUserInfoByUserId,
 };
