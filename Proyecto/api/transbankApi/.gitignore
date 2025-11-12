@@ -1,0 +1,11 @@
+# Dependencias
+node_modules/
+
+# Logs y reportes
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Entornos locales
+.env
