@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,10 +17,13 @@ import { useRouter } from "expo-router";
 import { useUserStore } from "../stores/useUserStore";
 import { useMascotaStore } from "../stores/useMascotaStore";
 import { useServicioStore } from "../stores/useServicioStore";
+import { useFocusEffect } from "@react-navigation/native";
 
 const getRandomAmount = () => {
   return `$${(Math.random() * 90 + 10).toFixed(2)}`;
 };
+
+const emojisList = ["🐶", "🐱", "🐾", "🦴", "🐕", "🐩", "🐕‍🦺", "🐈", "🐅", "🦁"];
 
 const markersData = [
   {
@@ -74,6 +77,19 @@ const MapComponent = ({ markers = markersData }) => {
     })();
   }, []);
 
+  // Nuevo useFocusEffect para recargar servicios cuando la pantalla se enfoca
+  useFocusEffect(
+    useCallback(() => {
+      const loadServicios = async () => {
+        if (user?.uid) {
+          await getServicios(user.uid);
+        }
+      };
+
+      loadServicios();
+    }, [user])
+  );
+
   const formatDateTime = (date) => {
     const day = date.getDate().toString().padStart(2, "0");
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -103,7 +119,7 @@ const MapComponent = ({ markers = markersData }) => {
 
   const handleCreateService = async () => {
     const servicioData = {
-      userId: user.uid,
+      user: user,
       mascota: selectedPet,
       fechaServicio: dateTime.toISOString(),
       fechaCreacion: new Date().toISOString(),
@@ -142,24 +158,24 @@ const MapComponent = ({ markers = markersData }) => {
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         }}
-        showsUserLocation={true}
+        showsUserLocation={false}
       >
         {user &&
           user.esPaseador &&
-          markers.map((marker) => (
+          servicios.map((marker) => (
             <Marker
               key={marker.id}
               coordinate={{
-                latitude: marker.latitude,
-                longitude: marker.longitude,
+                latitude: marker.location.latitude,
+                longitude: marker.location.longitude,
               }}
-              onPress={() => router.push("/servicio/servicio")}
+              onPress={() => router.push("/servicio/servicio?id=" + marker.id)}
             >
-              <Text style={{ fontSize: 40 }}>{marker.emoji}</Text>
+              <Text style={{ fontSize: 40 }}>{marker?.user.emoji}</Text>
 
               {/* Tooltip con precio */}
               <View style={styles.tooltip}>
-                <Text style={styles.tooltipText}>{marker.price}</Text>
+                <Text style={styles.tooltipText}>{marker.precio}</Text>
               </View>
             </Marker>
           ))}

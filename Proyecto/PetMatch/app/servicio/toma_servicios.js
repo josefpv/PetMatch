@@ -78,7 +78,9 @@ export default function TomaServicio() {
         </View>
         <View style={styles.columnRow}>
           <Text style={{ fontSize: 60 }}>🤝</Text>
-          <Text style={{ fontSize: 40 }}>¡Has tomado el servicio!</Text>
+          <Text style={{ fontSize: 40, textAlign: "center" }}>
+            ¡Has tomado el servicio!
+          </Text>
         </View>
         <View style={[styles.columnRow, { paddingHorizontal: 20 }]}>
           <Text style={{ textAlign: "center" }}>

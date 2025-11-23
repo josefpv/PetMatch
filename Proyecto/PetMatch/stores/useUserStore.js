@@ -29,6 +29,17 @@ export const useUserStore = create(
         }
       },
       logout: () => set({ user: null, isLoggedIn: false }),
+      getUserById: async (id) => {
+        const url = `${ACCOUNT_API_URL}/user/${id}`;
+        const response = await httpService.get(url);
+
+        if (response.status === 200) {
+          const { user } = response.data;
+          return user;
+        } else {
+          throw new Error("Fallo al intentar obtener detalle del usuario");
+        }
+      },
     }),
     {
       //REVISAR!!!
