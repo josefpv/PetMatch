@@ -4,6 +4,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import httpService from "../services/httpService";
 import { useUserStore } from "./useUserStore";
+import { auth } from "../services/firebase/firebaseSettings";
+import { ref, set } from "firebase/database";
 
 const SERVICIO_API_URL = Constants.expoConfig.extra.SERVICIO_API_URL;
 

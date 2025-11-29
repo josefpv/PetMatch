@@ -18,6 +18,8 @@ import { useUserStore } from "../stores/useUserStore";
 import { useMascotaStore } from "../stores/useMascotaStore";
 import { useServicioStore } from "../stores/useServicioStore";
 import { useFocusEffect } from "@react-navigation/native";
+import { ref, set, onValue } from "firebase/database";
+import { database } from "../services/firebase/firebaseSettings";
 
 const getRandomAmount = () => {
   return `$${(Math.random() * 90 + 10).toFixed(2)}`;
@@ -54,6 +56,9 @@ const MapComponent = ({ markers = markersData }) => {
   const [address, setAddress] = useState("");
   const [price, setPrice] = useState("");
 
+  const [ubicacionesDeOtrosUsuarios, setUbicacionesDeOtrosUsuarios] = useState(
+    []
+  );
   const { user, isLoggedIn, isLoading, login, logout } = useUserStore();
   const { mascotas, isLoading: isLoadingMascotas } = useMascotaStore();
   const {
@@ -64,6 +69,7 @@ const MapComponent = ({ markers = markersData }) => {
   } = useServicioStore();
 
   useEffect(() => {
+    let subscription = null;
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
@@ -71,11 +77,32 @@ const MapComponent = ({ markers = markersData }) => {
         setLoading(false);
         return;
       }
-      let loc = await Location.getCurrentPositionAsync({});
-      setLocation(loc.coords);
+      // let loc = await Location.getCurrentPositionAsync({});
+      // setLocation(loc.coords);
+
+      subscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 5000,
+          distanceInterval: 10,
+        },
+        (loc) => {
+          console.log(loc.coords);
+          setLocation(loc.coords);
+          subirUbicacionAFirebase(loc.coords.latitude, loc.coords.longitude);
+        }
+      );
+
       setLoading(false);
     })();
-  }, []);
+
+    return () => {
+      if (subscription) {
+        subscription.remove();
+        console.log("Rastreo de ubicación detenido.");
+      }
+    };
+  }, [user]);
 
   // Nuevo useFocusEffect para recargar servicios cuando la pantalla se enfoca
   useFocusEffect(
@@ -87,8 +114,33 @@ const MapComponent = ({ markers = markersData }) => {
       };
 
       loadServicios();
-    }, [user])
+    }, [user, isLoading])
   );
+
+  useEffect(() => {
+    const ubicacionesRef = ref(database, "ubicacionesUsuarios");
+
+    const unsubscribe = onValue(ubicacionesRef, (snapshot) => {
+      const data = snapshot.val(); // Obtiene todas las ubicaciones
+      if (data) {
+        // Convertir el objeto de Firebase a un array que MapView pueda usar
+        const usuariosEnMapa = Object.keys(data)
+          .filter((key) => key !== user?.uid) // Omitir mi propia ubicación si ya la tengo
+          .map((key) => ({
+            id: key,
+            ...data[key],
+          }));
+
+        console.log("usuariosEnMapa", usuariosEnMapa);
+        setUbicacionesDeOtrosUsuarios(usuariosEnMapa);
+      } else {
+        setUbicacionesDeOtrosUsuarios([]);
+      }
+    });
+
+    // Limpieza al desmontar el componente
+    return () => unsubscribe();
+  }, [user]);
 
   const formatDateTime = (date) => {
     const day = date.getDate().toString().padStart(2, "0");
@@ -140,6 +192,20 @@ const MapComponent = ({ markers = markersData }) => {
     setPrice("");
   };
 
+  const subirUbicacionAFirebase = (lat, lon) => {
+    if (!user?.uid) return;
+
+    const ubicacionRef = ref(database, "ubicacionesUsuarios/" + user.uid);
+    set(ubicacionRef, {
+      nombre: `${user.nombres} ${user.apellidos}`,
+      esPaseador: user.esPaseador,
+      emoji: user.emoji,
+      latitude: lat,
+      longitude: lon,
+      timestamp: Date.now(),
+    }).catch((error) => console.error("Error al subir ubicación:", error));
+  };
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -177,6 +243,20 @@ const MapComponent = ({ markers = markersData }) => {
               <View style={styles.tooltip}>
                 <Text style={styles.tooltipText}>{marker.precio}</Text>
               </View>
+            </Marker>
+          ))}
+        {user &&
+          !user.esPaseador &&
+          ubicacionesDeOtrosUsuarios.map((marker, index) => (
+            <Marker
+              key={marker.nombre + index}
+              coordinate={{
+                latitude: marker.latitude,
+                longitude: marker.longitude,
+              }}
+              onPress={() => router.push("/perfil/info_cuenta?id=" + marker.id)}
+            >
+              <Text style={{ fontSize: 40 }}>{marker?.emoji}</Text>
             </Marker>
           ))}
       </MapView>
@@ -492,3 +572,5 @@ const styles = StyleSheet.create({
 });
 
 export default MapComponent;
+
+//-33.482119, -70.601493

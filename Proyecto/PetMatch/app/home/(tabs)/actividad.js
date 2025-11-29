@@ -17,6 +17,8 @@ export default function ActividadScreen() {
   const usuarioActual = useUserStore((state) => state.user);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [selectedServicioId, setSelectedServicioId] = useState(null);
 
   // useEffect(() => {
   //   getHistorico(userId);
@@ -68,6 +70,19 @@ export default function ActividadScreen() {
 
   const handleRechazarContraoferta = async (servicioId) => {
     await updateServicio(servicioId, { estado: "rechazado" });
+  };
+
+  const handleConfirmaFinalizacion = (servicioId) => {
+    setSelectedServicioId(servicioId);
+    setConfirmModalVisible(true);
+  };
+
+  const handleFinalizarServicio = async () => {
+    if (selectedServicioId) {
+      await updateServicio(selectedServicioId, { estado: "por pagar" });
+      setConfirmModalVisible(false);
+      setSelectedServicioId(null);
+    }
   };
 
   const renderStars = (rating) => {
@@ -167,6 +182,26 @@ export default function ActividadScreen() {
           </TouchableOpacity>
         </View>
       )}
+      {usuarioActual.esPaseador && item.estado === "aceptado" && (
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.acceptButton]}
+            onPress={() => handleConfirmaFinalizacion(item.id)}
+          >
+            <Text style={styles.actionButtonText}>✓ Finalizar Servicio</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {!usuarioActual.esPaseador && item.estado === "por pagar" && (
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.acceptButton]}
+            onPress={() => handleAceptarContraoferta(item.id)}
+          >
+            <Text style={styles.actionButtonText}>✓ Realizar Pago</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 
@@ -215,6 +250,46 @@ export default function ActividadScreen() {
             >
               <Text style={styles.closeButtonText}>Cerrar</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={confirmModalVisible}
+        onRequestClose={() => setConfirmModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmModalContent}>
+            <Text style={styles.confirmTitle}>
+              ¿Está seguro que desea finalizar el servicio?
+            </Text>
+
+            <View style={styles.noteContainer}>
+              <Text style={styles.noteText}>
+                Al finalizar el servicio se habilitará el pago para que el dueño
+                de la mascota lo realice, asegúrate de entregar todas las
+                pertenencias de la mascota y de informarle al dueño que ya haz
+                finalizado el servicio para que el/ella realice el pago por el
+                monto acordado.
+              </Text>
+            </View>
+
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.confirmYesButton]}
+                onPress={handleFinalizarServicio}
+              >
+                <Text style={styles.confirmButtonText}>Sí</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.confirmNoButton]}
+                onPress={() => setConfirmModalVisible(false)}
+              >
+                <Text style={styles.confirmButtonText}>No</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -401,5 +476,56 @@ const styles = StyleSheet.create({
   star: {
     fontSize: 16,
     marginHorizontal: 1,
+  },
+  confirmModalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    width: "85%",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+  },
+  confirmTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  noteContainer: {
+    backgroundColor: "#f5f5f5",
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 24,
+  },
+  noteText: {
+    fontSize: 13,
+    color: "#9ca3af",
+    lineHeight: 20,
+    textAlign: "justify",
+  },
+  confirmButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  confirmButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  confirmYesButton: {
+    backgroundColor: "#10b981",
+  },
+  confirmNoButton: {
+    backgroundColor: "#ef4444",
+  },
+  confirmButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
