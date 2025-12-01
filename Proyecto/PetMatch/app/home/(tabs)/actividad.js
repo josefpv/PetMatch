@@ -11,6 +11,7 @@ import { useUserStore } from "./../../../stores/useUserStore";
 import { useCallback, useEffect, useState } from "react";
 import MapView, { Marker } from "react-native-maps";
 import { useFocusEffect } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 
 export default function ActividadScreen() {
   const { getHistorico, servicios, updateServicio } = useServicioStore();
@@ -83,6 +84,10 @@ export default function ActividadScreen() {
       setConfirmModalVisible(false);
       setSelectedServicioId(null);
     }
+  };
+
+  const handleRealizarPago = async () => {
+    await WebBrowser.openBrowserAsync("https://google.com");
   };
 
   const renderStars = (rating) => {
@@ -196,7 +201,7 @@ export default function ActividadScreen() {
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={[styles.actionButton, styles.acceptButton]}
-            onPress={() => handleAceptarContraoferta(item.id)}
+            onPress={handleRealizarPago}
           >
             <Text style={styles.actionButtonText}>✓ Realizar Pago</Text>
           </TouchableOpacity>
