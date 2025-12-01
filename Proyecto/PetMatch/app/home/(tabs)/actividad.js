@@ -5,6 +5,8 @@ import {
   FlatList,
   TouchableOpacity,
   Modal,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useServicioStore } from "./../../../stores/useServicioStore";
 import { useUserStore } from "./../../../stores/useUserStore";
@@ -12,6 +14,12 @@ import { useCallback, useEffect, useState } from "react";
 import MapView, { Marker } from "react-native-maps";
 import { useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
+
+const TBK_API_KEY_ID = "597055555532";
+const TBK_API_KEY_SECRET =
+  "579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C";
+const TBK_URL_BASE = "https://webpay3gint.transbank.cl";
 
 export default function ActividadScreen() {
   const { getHistorico, servicios, updateServicio } = useServicioStore();
@@ -24,6 +32,106 @@ export default function ActividadScreen() {
   // useEffect(() => {
   //   getHistorico(userId);
   // }, []);
+  const [isPaying, setIsPaying] = useState(false);
+
+  const handleRealizarPago = async (servicio) => {
+    if (isPaying) return;
+    setIsPaying(true);
+
+    try {
+      // 1. PREPARAR DATOS
+      const shortId = servicio.id.slice(0, 15);
+      const randomSuffix = Math.floor(Math.random() * 9000) + 1000;
+      const buyOrder = `O-${shortId}-${randomSuffix}`;
+      const sessionId = `S-${usuarioActual.uid.slice(0, 40)}`;
+      const amount = Math.floor(
+        Number(servicio.nuevoPrecio || servicio.precio)
+      );
+
+      // TRUCO PARA DEMO: Usamos Google para pasar la validación de Transbank
+      // Transbank no acepta 'exp://', así que usamos una https válida.
+      const returnUrl = "https://www.google.com";
+
+      console.log("🚀 Enviando a Transbank:", { buyOrder, amount, returnUrl });
+
+      // 2. PETICIÓN A TRANSBANK (CREATE)
+      const createResponse = await fetch(
+        `${TBK_URL_BASE}/rswebpaytransaction/api/webpay/v1.2/transactions`,
+        {
+          method: "POST",
+          headers: {
+            "Tbk-Api-Key-Id": TBK_API_KEY_ID,
+            "Tbk-Api-Key-Secret": TBK_API_KEY_SECRET,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            buy_order: buyOrder,
+            session_id: sessionId,
+            amount: amount,
+            return_url: returnUrl,
+          }),
+        }
+      );
+
+      const createData = await createResponse.json();
+
+      if (!createResponse.ok) {
+        console.error("❌ ERROR TRANSBANK:", createData);
+        Alert.alert("Error Transbank", createData.error_message);
+        setIsPaying(false);
+        return;
+      }
+
+      console.log("✅ Token Recibido. Abriendo navegador...");
+
+      // 3. ABRIR NAVEGADOR
+      // Usamos openBrowserAsync porque no habrá redirección automática a la App
+      await WebBrowser.openBrowserAsync(
+        `${createData.url}?token_ws=${createData.token}`
+      );
+
+      // 4. SIMULACIÓN DE CONFIRMACIÓN (Al cerrar el navegador)
+      // Como usamos Google, no recibimos el token de vuelta en la App automáticamente.
+      // Para la demo, asumimos que si el usuario cerró el navegador, completó el flujo.
+
+      Alert.alert(
+        "Confirmación de Pago",
+        "¿Finalizaste el pago en el portal de Transbank?",
+        [
+          {
+            text: "No, cancelé",
+            style: "cancel",
+            onPress: () => console.log("Pago cancelado por usuario"),
+          },
+          {
+            text: "Sí, pagué exitosamente",
+            onPress: async () => {
+              // AQUÍ SIMULAMOS EL COMMIT Y ACTUALIZAMOS LA BASE DE DATOS
+              // En producción real, aquí consultaríamos a Transbank con el token.
+              // Para la demo, confiamos en el usuario.
+
+              try {
+                await updateServicio(servicio.id, { estado: "pagado" });
+                await getHistorico(usuarioActual.uid);
+                Alert.alert(
+                  "¡Éxito!",
+                  "El servicio ha sido marcado como pagado."
+                );
+              } catch (e) {
+                console.error(e);
+                Alert.alert("Error", "No se pudo actualizar el servicio.");
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error("🔥 Error General:", error);
+      Alert.alert("Error", "Ocurrió un error inesperado.");
+    } finally {
+      setIsPaying(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -86,9 +194,9 @@ export default function ActividadScreen() {
     }
   };
 
-  const handleRealizarPago = async () => {
+  /*   const handleRealizarPago = async () => {
     await WebBrowser.openBrowserAsync("https://google.com");
-  };
+  }; */
 
   const renderStars = (rating) => {
     const stars = [];
@@ -197,13 +305,34 @@ export default function ActividadScreen() {
           </TouchableOpacity>
         </View>
       )}
-      {!usuarioActual.esPaseador && item.estado === "por pagar" && (
+      {/* {!usuarioActual.esPaseador && item.estado === "por pagar" && (
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={[styles.actionButton, styles.acceptButton]}
             onPress={handleRealizarPago}
           >
             <Text style={styles.actionButtonText}>✓ Realizar Pago</Text>
+          </TouchableOpacity>
+        </View>
+      )} */}
+      {/* BOTÓN REALIZAR PAGO */}
+      {!usuarioActual.esPaseador && item.estado === "por pagar" && (
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              styles.acceptButton,
+              isPaying && { opacity: 0.7 },
+            ]}
+            // IMPORTANTE: Pasamos el 'item' completo para tener datos
+            onPress={() => handleRealizarPago(item)}
+            disabled={isPaying}
+          >
+            {isPaying ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.actionButtonText}>✓ Realizar Pago</Text>
+            )}
           </TouchableOpacity>
         </View>
       )}
