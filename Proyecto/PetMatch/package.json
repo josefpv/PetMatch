@@ -19,7 +19,8 @@
     "react-native-screens": "~4.16.0",
     "react-native-snackbar": "^2.9.0",
     "react-native-web": "^0.21.0",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.8",
+    "expo-web-browser": "~15.0.9"
   },
   "devDependencies": {
     "@babel/core": "^7.19.3"
