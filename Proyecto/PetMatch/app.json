@@ -5,14 +5,18 @@
   "expo": {
     "scheme": "petmatch",
     "ios": {
+      "bundleIdentifier": "com.tuapp.petmatch",
       "infoPlist": {
         "NSCameraUsageDescription": "Esta app necesita acceso a la cámara para tomar fotos."
+      },
+      "android": {
+        "package": "com.tuapp.petmatch"
       }
     },
     "extra": {
-      "ACCOUNT_API_URL": "https://nontranscriptive-iconic-tomika.ngrok-free.dev/api/v1/account",
-      "MASCOTA_API_URL": "https://nontranscriptive-iconic-tomika.ngrok-free.dev/api/v1/mascotas",
-      "SERVICIO_API_URL": "https://nontranscriptive-iconic-tomika.ngrok-free.dev/api/v1/servicios",
+      "ACCOUNT_API_URL": "https://5f78f12d7d3e.ngrok-free.app/api/v1/account",
+      "MASCOTA_API_URL": "https://5f78f12d7d3e.ngrok-free.app/api/v1/mascotas",
+      "SERVICIO_API_URL": "https://5f78f12d7d3e.ngrok-free.app/api/v1/servicios",
       "FB_API_KEY": "AIzaSyCZNJEkkM6YFSAHu3wdWkdvt7wkyihO-QE",
       "FB_AUTH_DOMAIN": "petmatch-487fa.firebaseapp.com",
       "FB_PROJECT_ID": "petmatch-487fa",

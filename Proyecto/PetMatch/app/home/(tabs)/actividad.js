@@ -20,6 +20,7 @@ const TBK_API_KEY_ID = "597055555532";
 const TBK_API_KEY_SECRET =
   "579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C";
 const TBK_URL_BASE = "https://webpay3gint.transbank.cl";
+const API_URL = "https://5f78f12d7d3e.ngrok-free.app/api/v1/transbank";
 
 export default function ActividadScreen() {
   const { getHistorico, servicios, updateServicio } = useServicioStore();
@@ -28,109 +29,178 @@ export default function ActividadScreen() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [selectedServicioId, setSelectedServicioId] = useState(null);
-
-  // useEffect(() => {
-  //   getHistorico(userId);
-  // }, []);
   const [isPaying, setIsPaying] = useState(false);
+
+  useEffect(() => {
+    const subscription = Linking.addEventListener("url", handleDeepLink);
+
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
+
+  const handleDeepLink = async ({ url }) => {
+    console.log("🔗 Deep Link recibido:", url);
+
+    // Parsear el token de la URL: petmatch://payment-return?token_ws=XXX
+    const { queryParams } = Linking.parse(url);
+    const token = queryParams?.token_ws;
+
+    if (token) {
+      await confirmarPagoConTransbank(token);
+    }
+  };
+
+  const confirmarPagoConTransbank = async (token) => {
+    try {
+      console.log("✅ Confirmando pago con token:", token);
+
+      // COMMIT de la transacción con Transbank
+      const commitResponse = await fetch(
+        `${TBK_URL_BASE}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}`,
+        {
+          method: "PUT",
+          headers: {
+            "Tbk-Api-Key-Id": TBK_API_KEY_ID,
+            "Tbk-Api-Key-Secret": TBK_API_KEY_SECRET,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const commitData = await commitResponse.json();
+      console.log("📦 Respuesta Commit:", commitData);
+
+      if (commitData.response_code === 0) {
+        // Pago exitoso
+        const servicioId = commitData.buy_order.split("-")[1]; // Extraer ID del servicio
+
+        await updateServicio(servicioId, {
+          estado: "pagado",
+          transaccion: {
+            token: token,
+            buyOrder: commitData.buy_order,
+            authorizationCode: commitData.authorization_code,
+            amount: commitData.amount,
+            fecha: new Date().toISOString(),
+          },
+        });
+
+        await getHistorico(usuarioActual.uid);
+
+        Alert.alert(
+          "¡Pago Exitoso!",
+          `Tu pago de $${commitData.amount} ha sido procesado correctamente.`
+        );
+      } else {
+        // Pago rechazado
+        Alert.alert(
+          "Pago Rechazado",
+          `El pago fue rechazado. Código: ${commitData.response_code}`
+        );
+      }
+    } catch (error) {
+      console.error("❌ Error confirmando pago:", error);
+      Alert.alert("Error", "No se pudo confirmar el pago con Transbank");
+    } finally {
+      setIsPaying(false);
+    }
+  };
 
   const handleRealizarPago = async (servicio) => {
     if (isPaying) return;
     setIsPaying(true);
 
     try {
-      // 1. PREPARAR DATOS
-      const shortId = servicio.id.slice(0, 15);
-      const randomSuffix = Math.floor(Math.random() * 9000) + 1000;
-      const buyOrder = `O-${shortId}-${randomSuffix}`;
-      const sessionId = `S-${usuarioActual.uid.slice(0, 40)}`;
       const amount = Math.floor(
         Number(servicio.nuevoPrecio || servicio.precio)
       );
 
-      // TRUCO PARA DEMO: Usamos Google para pasar la validación de Transbank
-      // Transbank no acepta 'exp://', así que usamos una https válida.
-      const returnUrl = "https://www.google.com";
+      console.log("🚀 Iniciando pago:", { servicioId: servicio.id, amount });
 
-      console.log("🚀 Enviando a Transbank:", { buyOrder, amount, returnUrl });
+      // 1. LLAMAR A TU API PARA CREAR LA TRANSACCIÓN
+      const response = await fetch(`${API_URL}/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          servicioId: servicio.id,
+          userId: usuarioActual.uid,
+          amount: amount,
+        }),
+      });
 
-      // 2. PETICIÓN A TRANSBANK (CREATE)
-      const createResponse = await fetch(
-        `${TBK_URL_BASE}/rswebpaytransaction/api/webpay/v1.2/transactions`,
-        {
-          method: "POST",
-          headers: {
-            "Tbk-Api-Key-Id": TBK_API_KEY_ID,
-            "Tbk-Api-Key-Secret": TBK_API_KEY_SECRET,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            buy_order: buyOrder,
-            session_id: sessionId,
-            amount: amount,
-            return_url: returnUrl,
-          }),
-        }
-      );
+      const data = await response.json();
 
-      const createData = await createResponse.json();
-
-      if (!createResponse.ok) {
-        console.error("❌ ERROR TRANSBANK:", createData);
-        Alert.alert("Error Transbank", createData.error_message);
+      if (!response.ok) {
+        console.error("❌ Error:", data);
+        Alert.alert("Error", data.error || "No se pudo crear la transacción");
         setIsPaying(false);
         return;
       }
 
-      console.log("✅ Token Recibido. Abriendo navegador...");
+      console.log("✅ Token recibido. Abriendo navegador...");
 
-      // 3. ABRIR NAVEGADOR
-      // Usamos openBrowserAsync porque no habrá redirección automática a la App
-      await WebBrowser.openBrowserAsync(
-        `${createData.url}?token_ws=${createData.token}`
+      // 2. ABRIR NAVEGADOR CON LA URL DE WEBPAY
+      const result = await WebBrowser.openBrowserAsync(
+        `${data.url}?token_ws=${data.token}`
       );
 
-      // 4. SIMULACIÓN DE CONFIRMACIÓN (Al cerrar el navegador)
-      // Como usamos Google, no recibimos el token de vuelta en la App automáticamente.
-      // Para la demo, asumimos que si el usuario cerró el navegador, completó el flujo.
+      console.log("📱 Navegador cerrado:", result);
 
-      Alert.alert(
-        "Confirmación de Pago",
-        "¿Finalizaste el pago en el portal de Transbank?",
-        [
-          {
-            text: "No, cancelé",
-            style: "cancel",
-            onPress: () => console.log("Pago cancelado por usuario"),
-          },
-          {
-            text: "Sí, pagué exitosamente",
-            onPress: async () => {
-              // AQUÍ SIMULAMOS EL COMMIT Y ACTUALIZAMOS LA BASE DE DATOS
-              // En producción real, aquí consultaríamos a Transbank con el token.
-              // Para la demo, confiamos en el usuario.
-
-              try {
-                await updateServicio(servicio.id, { estado: "pagado" });
-                await getHistorico(usuarioActual.uid);
-                Alert.alert(
-                  "¡Éxito!",
-                  "El servicio ha sido marcado como pagado."
-                );
-              } catch (e) {
-                console.error(e);
-                Alert.alert("Error", "No se pudo actualizar el servicio.");
-              }
-            },
-          },
-        ]
-      );
+      // 3. VERIFICAR ESTADO DEL PAGO
+      await verificarEstadoPago(servicio.id);
     } catch (error) {
-      console.error("🔥 Error General:", error);
+      console.error("🔥 Error:", error);
       Alert.alert("Error", "Ocurrió un error inesperado.");
-    } finally {
       setIsPaying(false);
     }
+  };
+
+  const verificarEstadoPago = async (servicioId) => {
+    console.log("🔍 Verificando estado del pago...");
+
+    let attempts = 0;
+    const maxAttempts = 15; // 30 segundos máximo
+
+    const checkInterval = setInterval(async () => {
+      attempts++;
+
+      try {
+        const response = await fetch(`${API_URL}/status/${servicioId}`);
+        const { estado, transaccion } = await response.json();
+
+        console.log(`📊 Intento ${attempts}: Estado = ${estado}`);
+
+        if (estado === "pagado") {
+          clearInterval(checkInterval);
+          await getHistorico(usuarioActual.uid);
+          Alert.alert(
+            "¡Pago Exitoso! ✅",
+            `Tu pago de $${transaccion.amount} ha sido procesado correctamente.`
+          );
+          setIsPaying(false);
+        } else if (estado === "rechazado") {
+          clearInterval(checkInterval);
+          Alert.alert("Pago Rechazado ❌", "El pago fue rechazado.");
+          setIsPaying(false);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(checkInterval);
+          Alert.alert(
+            "Tiempo agotado ⏰",
+            "No se pudo verificar el estado del pago. Por favor revisa tu historial en unos momentos."
+          );
+          setIsPaying(false);
+        }
+      } catch (error) {
+        console.error("Error verificando pago:", error);
+        if (attempts >= maxAttempts) {
+          clearInterval(checkInterval);
+          setIsPaying(false);
+        }
+      }
+    }, 2000); // Verificar cada 2 segundos
   };
 
   useFocusEffect(
