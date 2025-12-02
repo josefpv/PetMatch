@@ -1,19 +1,18 @@
 {
   "name": "PetMatch",
   "slug": "PetMatch",
-  "plugins": [
-    "expo-router"
-  ],
+  "plugins": ["expo-router"],
   "expo": {
+    "scheme": "petmatch",
     "ios": {
       "infoPlist": {
         "NSCameraUsageDescription": "Esta app necesita acceso a la cámara para tomar fotos."
       }
     },
     "extra": {
-      "ACCOUNT_API_URL": "https://16137f182a57.ngrok-free.app/api/v1/account",
-      "MASCOTA_API_URL": "https://16137f182a57.ngrok-free.app/api/v1/mascotas",
-      "SERVICIO_API_URL": "https://16137f182a57.ngrok-free.app/api/v1/servicios",
+      "ACCOUNT_API_URL": "https://nontranscriptive-iconic-tomika.ngrok-free.dev/api/v1/account",
+      "MASCOTA_API_URL": "https://nontranscriptive-iconic-tomika.ngrok-free.dev/api/v1/mascotas",
+      "SERVICIO_API_URL": "https://nontranscriptive-iconic-tomika.ngrok-free.dev/api/v1/servicios",
       "FB_API_KEY": "AIzaSyCZNJEkkM6YFSAHu3wdWkdvt7wkyihO-QE",
       "FB_AUTH_DOMAIN": "petmatch-487fa.firebaseapp.com",
       "FB_PROJECT_ID": "petmatch-487fa",
@@ -21,8 +20,6 @@
       "FB_MESSAGING_SENDER_ID": "607015298343",
       "FB_APP_ID": "1:607015298343:web:91fe6341655df1ea487502"
     },
-    "plugins": [
-      "expo-web-browser"
-    ]
+    "plugins": ["expo-web-browser"]
   }
 }
